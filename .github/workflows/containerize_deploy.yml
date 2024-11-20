@@ -34,9 +34,9 @@ jobs:
       - name: configure aws
         uses: aws-actions/configure-aws-credentials@v2
         with:
-          aws-access-key-id: ${{ }}
-          aws-secret-access-key: ${{ }}
-          aws-region: ${{ }}
+          aws-access-key-id: ${{ secret.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secret.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secret.AWS_REGION }}
 
       - name: Deploy to ECS
         run: |

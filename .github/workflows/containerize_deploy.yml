@@ -1,0 +1,52 @@
+name: "CI CD Containerize Deploy to ECS"
+
+on: workflow_dispatch
+
+jobs:
+  test-build-job:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: setup node
+        uses: actions/setup-node@v4
+
+      - name: dependencies
+        run: npm install
+
+      - name: setup docker
+        uses: docker/setup-buildx-action@v3
+
+      - name: build image
+        run: docker build -t simple-react-app .
+
+      - name: login to ECR
+        run: aws-actions/amazon-ecr-login@v2
+
+      - name: tag docker image
+        run: docker push simple-react-app ${{ github.IMAGE_TAG }}:${{ github.REPOSITORY_URI }}
+
+  deploy-job:
+    runs-on: ubuntu-latest
+    needs: test-build-job
+    steps:
+      - name: configure aws
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ }}
+          aws-secret-access-key: ${{ }}
+          aws-region: ${{ }}
+
+      - name: Deploy to ECS
+        run: |
+          CLUSTER_NAME=${{ github.CLUSTER_NAME }}
+          SERVICE_NAME=${{ github.SERVICE_NAME }}
+          TASK_DEFINITION_NAME=${{ github.TASK_DEFINITION_NAME }}
+
+
+          aws ecs update-service \
+          --cluster ${{ CLUSTER_NAME }} \
+          --service ${{ SERVICE_NAME }} \
+          --force-new-deployment \
+          --image ${{ github.REPOSITORY_URI }}:latest
